@@ -2,46 +2,94 @@
 {% block title %}Register | SnatPap{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-7">
-        <div class="card glass-card">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+        <div class="card glass-card registration-card">
             <div class="card-body p-4 p-md-5">
                 <h1 class="h3 mb-4 text-white fw-bold">Create your account</h1>
+                {% for message in messages %}
+                    <div class="alert alert-danger bg-opacity-10 border-0 shadow-sm" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
                 <form method="post">
                     {% csrf_token %}
-                    <div class="row g-3">
-                        <div class="col-md-6">
+                    <div class="d-grid gap-3">
+                        <div>
+                            <label class="form-label text-secondary" for="first_name">First name</label>
+                            <input class="form-control{% if 'first_name' in field_errors %} is-invalid{% endif %}" id="first_name" name="first_name" value="{{ form_data.first_name|default:'' }}" required>
+                        </div>
+                        <div>
+                            <label class="form-label text-secondary" for="last_name">Last name</label>
+                            <input class="form-control{% if 'last_name' in field_errors %} is-invalid{% endif %}" id="last_name" name="last_name" value="{{ form_data.last_name|default:'' }}" required>
+                        </div>
+                        <div>
                             <label class="form-label text-secondary" for="username">Username</label>
-                            <input class="form-control" id="username" name="username" required>
+                            <input class="form-control{% if 'username' in field_errors %} is-invalid{% endif %}" id="username" name="username" value="{{ form_data.username|default:'' }}" required>
                         </div>
-                        <div class="col-md-6">
+                        <div>
                             <label class="form-label text-secondary" for="email">Email</label>
-                            <input class="form-control" id="email" name="email" type="email" required>
+                            <input class="form-control{% if 'email' in field_errors %} is-invalid{% endif %}" id="email" name="email" type="email" value="{{ form_data.email|default:'' }}" required>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-secondary" for="number">Number</label>
-                            <input class="form-control" id="number" name="number" required>
+                        <div>
+                            <label class="form-label text-secondary" for="phone_number">Phone number</label>
+                            <div class="input-group">
+                                <select class="form-select site-select country-select{% if 'phone_number' in field_errors %} is-invalid{% endif %}" id="country_code" name="country_code" required aria-label="Country code">
+                                    {% for code, flag in country_codes %}
+                                        <option value="{{ code }}"{% if form_data.country_code|default:'+63' == code %} selected{% endif %}>{{ flag }} {{ code }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input class="form-control{% if 'phone_number' in field_errors %} is-invalid{% endif %}" id="phone_number" name="phone_number" type="tel" value="{{ form_data.phone_number|default:'' }}" placeholder="Phone number" required>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-secondary" for="location">Location</label>
-                            <input class="form-control" id="location" name="location" required>
+                        <div>
+                            <label class="form-label text-secondary" for="street_address">Street address</label>
+                            <input class="form-control{% if 'street_address' in field_errors %} is-invalid{% endif %}" id="street_address" name="street_address" value="{{ form_data.street_address|default:'' }}" autocomplete="street-address" required>
                         </div>
-                        <div class="col-md-6">
+                        <div>
+                            <label class="form-label text-secondary" for="province">Province</label>
+                            <select class="form-select site-select{% if 'province' in field_errors %} is-invalid{% endif %}" id="province" name="province" data-selected="{{ form_data.province|default:'' }}" required>
+                                <option value="">Loading provinces...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label text-secondary" for="city_municipality">City / municipality</label>
+                            <select class="form-select site-select{% if 'city_municipality' in field_errors %} is-invalid{% endif %}" id="city_municipality" name="city_municipality" data-selected="{{ form_data.city_municipality|default:'' }}" disabled required>
+                                <option value="">Select a province first</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label text-secondary" for="barangay">Barangay</label>
+                            <select class="form-select site-select{% if 'barangay' in field_errors %} is-invalid{% endif %}" id="barangay" name="barangay" data-selected="{{ form_data.barangay|default:'' }}" disabled required>
+                                <option value="">Select a city or municipality first</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label text-secondary" for="postal_code">Postal code</label>
+                            <input class="form-control{% if 'postal_code' in field_errors %} is-invalid{% endif %}" id="postal_code" name="postal_code" value="{{ form_data.postal_code|default:'' }}" inputmode="numeric" autocomplete="postal-code" required>
+                        </div>
+                        <div>
                             <label class="form-label text-secondary" for="password">Password</label>
-                            <input class="form-control" id="password" name="password" type="password" required>
+                            <div class="password-field">
+                                <input class="form-control{% if 'password' in field_errors %} is-invalid{% endif %}" id="password" name="password" type="password" required>
+                                <button class="password-toggle password-reveal" type="button" data-password-target="password" aria-label="Hold to show password" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button>
+                            </div>
                         </div>
-                        <div class="col-md-6">
+                        <div>
                             <label class="form-label text-secondary" for="password_confirmation">Confirm password</label>
-                            <input class="form-control" id="password_confirmation" name="password_confirmation" type="password" required>
+                            <div class="password-field">
+                                <input class="form-control{% if 'password_confirmation' in field_errors %} is-invalid{% endif %}" id="password_confirmation" name="password_confirmation" type="password" required>
+                                <button class="password-toggle password-reveal" type="button" data-password-target="password_confirmation" aria-label="Hold to show password" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button>
+                            </div>
                         </div>
-                        <div class="col-12 mt-4">
+                        <div class="mt-1">
                             <div class="form-check">
-                                <input class="form-check-input" id="consent" name="consent" type="checkbox" required>
+                                <input class="form-check-input{% if 'consent' in field_errors %} is-invalid{% endif %}" id="consent" name="consent" type="checkbox"{% if form_data.consent %} checked{% endif %} required>
                                 <label class="form-check-label text-secondary" for="consent">
                                     I consent to the storage and use of my registration details.
                                 </label>
                             </div>
                         </div>
-                        <div class="col-12 mt-4">
+                        <div class="mt-1">
                             <button class="btn btn-primary w-100 fw-semibold py-2" type="submit">Create account</button>
                         </div>
                     </div>
@@ -51,4 +99,75 @@
         </div>
     </div>
 </div>
+<script>
+    const psgcApi = 'https://psgc.gitlab.io/api';
+    const provinceSelect = document.getElementById('province');
+    const citySelect = document.getElementById('city_municipality');
+    const barangaySelect = document.getElementById('barangay');
+
+    function populateSelect(select, items, placeholder, selectedValue) {
+        select.replaceChildren(new Option(placeholder, ''));
+        items.forEach((item) => {
+            const option = new Option(item.name, item.name);
+            option.dataset.code = item.code;
+            option.selected = item.name === selectedValue;
+            select.add(option);
+        });
+        select.disabled = false;
+    }
+
+    async function loadLocationOptions(url, select, placeholder, selectedValue) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Location data request failed');
+            populateSelect(select, await response.json(), placeholder, selectedValue);
+        } catch (error) {
+            select.replaceChildren(new Option('Unable to load options. Please refresh.', ''));
+        }
+    }
+
+    provinceSelect.addEventListener('change', () => {
+        const provinceCode = provinceSelect.options[provinceSelect.selectedIndex]?.dataset.code;
+        citySelect.disabled = true;
+        barangaySelect.disabled = true;
+        if (provinceCode) {
+            loadLocationOptions(`${psgcApi}/provinces/${provinceCode}/cities-municipalities.json`, citySelect, 'Select a city or municipality', citySelect.dataset.selected);
+        }
+    });
+
+    citySelect.addEventListener('change', () => {
+        const cityCode = citySelect.options[citySelect.selectedIndex]?.dataset.code;
+        barangaySelect.disabled = true;
+        if (cityCode) {
+            loadLocationOptions(`${psgcApi}/cities-municipalities/${cityCode}/barangays.json`, barangaySelect, 'Select a barangay', barangaySelect.dataset.selected);
+        }
+    });
+
+    loadLocationOptions(`${psgcApi}/provinces.json`, provinceSelect, 'Select a province', provinceSelect.dataset.selected).then(() => {
+        if (provinceSelect.value) provinceSelect.dispatchEvent(new Event('change'));
+    });
+
+    document.querySelectorAll('.password-reveal').forEach((button) => {
+        const password = document.getElementById(button.dataset.passwordTarget);
+
+        const showPassword = () => {
+            password.type = 'text';
+            button.setAttribute('aria-pressed', 'true');
+            button.setAttribute('aria-label', 'Release to hide password');
+            button.querySelector('i').className = 'bi bi-eye-slash';
+        };
+
+        const hidePassword = () => {
+            password.type = 'password';
+            button.setAttribute('aria-pressed', 'false');
+            button.setAttribute('aria-label', 'Hold to show password');
+            button.querySelector('i').className = 'bi bi-eye';
+        };
+
+        button.addEventListener('pointerdown', showPassword);
+        button.addEventListener('pointerup', hidePassword);
+        button.addEventListener('pointerleave', hidePassword);
+        button.addEventListener('pointercancel', hidePassword);
+    });
+</script>
 {% endblock %}

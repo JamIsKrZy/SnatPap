@@ -5,28 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}SnatPap{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
+        :root {
+            /* Default positions before the mouse moves */
+            --mouse-x: 50vw;
+            --mouse-y: 50vh;
+        }
+
         body {
-            background-color: #0a0a0c; /* Solid dark base, no gradient */
+            background-color: #0a0a0c; 
             min-height: 100vh;
             position: relative;
             z-index: 0;
             color: #e0e0e0;
         }
 
-        /* Standard Halftone Dot Pattern Gradient */
+        /* Interactive Halftone Dot Pattern */
         body::before {
             content: '';
             position: fixed;
             inset: 0;
-            /* Creates the dots */
-            background-image: radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+            /* Creates the dots (made slightly brighter so the mask effect pops) */
+            background-image: radial-gradient(rgba(255, 255, 255, 0.35) 1px, transparent 1px);
             background-size: 20px 20px;
-            /* Masks the dots with a gradient so they fade out smoothly */
-            mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 85%);
-            -webkit-mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 85%);
+            
+            /* 
+               Combines two masks:
+               1. A very dim, static circle in the center.
+               2. A bright, dynamic circle that follows the --mouse-x and --mouse-y coordinates.
+            */
+            mask-image: 
+                radial-gradient(circle at 50% 50%, rgba(0,0,0,0.15) 0%, transparent 80%),
+                radial-gradient(circle 350px at var(--mouse-x) var(--mouse-y), black 0%, transparent 100%);
+            -webkit-mask-image: 
+                radial-gradient(circle at 50% 50%, rgba(0,0,0,0.15) 0%, transparent 80%),
+                radial-gradient(circle 350px at var(--mouse-x) var(--mouse-y), black 0%, transparent 100%);
+            
             z-index: -2;
             pointer-events: none;
+            transition: mask-position 0.1s ease; /* Smooths out the mouse tracking slightly */
         }
 
         /* Glow Elements */
@@ -49,16 +67,59 @@
             background: radial-gradient(circle, rgba(0, 0, 0, 0.95) 0%, transparent 70%);
         }
 
-        /* Small vibrant glow */
+        /* Small vibrant glow (Also follows the mouse subtly) */
         .vibrant-glow {
             position: absolute;
-            top: 40%; 
-            left: 50%; 
+            top: var(--mouse-y); 
+            left: var(--mouse-x); 
             transform: translate(-50%, -50%);
-            width: 350px; 
-            height: 350px;
-            background: radial-gradient(circle, rgba(112, 0, 255, 0.15) 0%, rgba(0, 212, 255, 0.05) 60%, transparent 80%);
+            width: 400px; 
+            height: 400px;
+            background: radial-gradient(circle, rgba(112, 0, 255, 0.12) 0%, rgba(0, 212, 255, 0.04) 50%, transparent 70%);
             filter: blur(40px);
+            transition: top 0.1s ease, left 0.1s ease;
+        }
+
+        /* Firework-style ripple glows: soft radial blooms that pop up at
+           random spots, bloom outward like a water ripple, then fade. */
+        .ripple-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            filter: blur(50px);
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0;
+            will-change: transform, opacity;
+            animation-name: ripple-bloom;
+            animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes ripple-bloom {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            12% {
+                opacity: 0.45;
+            }
+            55% {
+                opacity: 0.22;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ripple-glow {
+                animation: none;
+                display: none;
+            }
         }
 
         /* Enhanced Glass Card */
@@ -68,10 +129,9 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 1rem;
-            /* Dark drop shadow combined with a subtle vibrant colored glow */
             box-shadow: 
-                0 30px 60px rgba(0, 0, 0, 0.9), /* Dark glow */
-                0 0 25px rgba(112, 0, 255, 0.15), /* Small vibrant glow */
+                0 30px 60px rgba(0, 0, 0, 0.9), 
+                0 0 25px rgba(112, 0, 255, 0.15), 
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
@@ -99,6 +159,34 @@
             color: white;
         }
 
+        .site-select {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+
+        .site-select:focus {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-color: #7000ff;
+            box-shadow: 0 0 0 0.25rem rgba(112, 0, 255, 0.25);
+            color: white;
+        }
+
+        .site-select:disabled {
+            background-color: rgba(0, 0, 0, 0.25);
+            color: #6c757d;
+            opacity: 0.75;
+        }
+
+        .site-select option {
+            background-color: #141418;
+            color: #e0e0e0;
+        }
+
+        .country-select {
+            max-width: 7rem;
+        }
+
         .btn-primary {
             background-color: #6200ea;
             border-color: #6200ea;
@@ -111,6 +199,32 @@
             border-color: #7c4dff;
             box-shadow: 0 6px 20px rgba(124, 77, 255, 0.6);
             transform: translateY(-1px);
+        }
+
+        .password-field {
+            position: relative;
+        }
+
+        .password-field .form-control {
+            padding-right: 3rem;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 0.75rem;
+            z-index: 2;
+            padding: 0.25rem;
+            border: 0;
+            background: transparent;
+            color: #adb5bd;
+            line-height: 1;
+            transform: translateY(-50%);
+        }
+
+        .password-toggle:hover,
+        .password-toggle:focus-visible {
+            color: #ffffff;
         }
 
         a {
@@ -141,20 +255,106 @@
                 {% csrf_token %}
                 <button class="btn btn-outline-light btn-sm" type="submit">Log out</button>
             </form>
+            {% elif request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'register' %}
+            <a class="btn btn-outline-light px-3 py-2" href="{% url 'login' %}">Log in</a>
             {% endif %}
         </div>
     </nav>
 
     <main class="container py-5">
+        {% if request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'register' %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags|default:'info' }} bg-opacity-10 border-0 shadow-sm" role="alert">
                 {{ message }}
             </div>
         {% endfor %}
+        {% endif %}
         
         {% block content %}{% endblock %}
     </main>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Mouse Tracking Script for Interactive Halftone & Glow -->
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            // Update CSS variables on the root document with the mouse X and Y coordinates
+            document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+        });
+    </script>
+
+    <!-- Random Ripple/Firework Glow Loop -->
+    <script>
+        (function () {
+            const wrapper = document.querySelector('.glow-wrapper');
+            if (!wrapper) return;
+
+            // Two soft color themes to match the existing purple/cyan palette,
+            // built as ripple-style gradients (bright core fading through mid
+            // tone into nothing, like a bloom on water).
+            const palettes = [
+                [
+                    'rgba(112, 0, 255, 0.22)',
+                    'rgba(112, 0, 255, 0.08)',
+                    'rgba(0, 212, 255, 0.03)'
+                ],
+                [
+                    'rgba(0, 212, 255, 0.20)',
+                    'rgba(0, 212, 255, 0.07)',
+                    'rgba(112, 0, 255, 0.03)'
+                ]
+            ];
+
+            function spawnRipple() {
+                const glow = document.createElement('div');
+                glow.className = 'ripple-glow';
+
+                // Random position anywhere in the viewport.
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+
+                // Size scales with the user's screen: a slice of whichever
+                // viewport dimension is smaller, so it stays proportional
+                // on both tall phone screens and wide desktop monitors.
+                const base = Math.min(window.innerWidth, window.innerHeight);
+                const size = base * (0.45 + Math.random() * 0.45); // ~45-90% of the shorter side
+
+                const [core, mid, edge] = palettes[Math.floor(Math.random() * palettes.length)];
+
+                glow.style.left = `${x}px`;
+                glow.style.top = `${y}px`;
+                glow.style.width = `${size}px`;
+                glow.style.height = `${size}px`;
+                glow.style.background =
+                    `radial-gradient(circle, ${core} 0%, ${mid} 45%, ${edge} 65%, transparent 75%)`;
+
+                // Slight randomness in duration so ripples don't feel mechanical.
+                const duration = 2.2 + Math.random() * 1.6;
+                glow.style.animationDuration = `${duration}s`;
+
+                wrapper.appendChild(glow);
+
+                // Clean up the DOM once the bloom has fully faded.
+                window.setTimeout(() => glow.remove(), duration * 1000 + 100);
+            }
+
+            function loop() {
+                spawnRipple();
+                // Irregular gaps between pops, like intermittent fireworks.
+                const nextDelay = 700 + Math.random() * 1400;
+                window.setTimeout(loop, nextDelay);
+            }
+
+            // Respect users who've asked for reduced motion.
+            const prefersReducedMotion = window.matchMedia(
+                '(prefers-reduced-motion: reduce)'
+            ).matches;
+
+            if (!prefersReducedMotion) {
+                loop();
+            }
+        })();
+    </script>
 </body>
 </html>
