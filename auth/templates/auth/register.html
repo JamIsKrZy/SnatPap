@@ -1,0 +1,27 @@
+{% extends 'auth/base.html' %}
+{% block title %}Register | SnatPap{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h3 mb-4">Create your account</h1>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label" for="username">Username</label><input class="form-control" id="username" name="username" required></div>
+                        <div class="col-md-6"><label class="form-label" for="email">Email</label><input class="form-control" id="email" name="email" type="email" required></div>
+                        <div class="col-md-6"><label class="form-label" for="number">Number</label><input class="form-control" id="number" name="number" required></div>
+                        <div class="col-md-6"><label class="form-label" for="location">Location</label><input class="form-control" id="location" name="location" required></div>
+                        <div class="col-md-6"><label class="form-label" for="password">Password</label><input class="form-control" id="password" name="password" type="password" required></div>
+                        <div class="col-md-6"><label class="form-label" for="password_confirmation">Confirm password</label><input class="form-control" id="password_confirmation" name="password_confirmation" type="password" required></div>
+                        <div class="col-12"><div class="form-check"><input class="form-check-input" id="consent" name="consent" type="checkbox" required><label class="form-check-label" for="consent">I consent to the storage and use of my registration details.</label></div></div>
+                        <div class="col-12"><button class="btn btn-primary w-100" type="submit">Create account</button></div>
+                    </div>
+                </form>
+                <p class="text-center text-secondary mt-4 mb-0">Already registered? <a href="{% url 'login' %}">Log in</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
