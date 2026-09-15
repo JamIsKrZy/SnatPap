@@ -54,14 +54,27 @@ const citySelect = document.getElementById('city_municipality');
 const barangaySelect = document.getElementById('barangay');
 
 if (provinceSelect && citySelect && barangaySelect) {
+    function normalizeSelection(value) {
+        return String(value ?? '').trim().toLowerCase();
+    }
+
     function populateSelect(select, items, placeholder, selectedValue) {
+        const sortedItems = [...items].sort((a, b) => a.name.localeCompare(b.name));
+        const normalizedSelectedValue = normalizeSelection(selectedValue);
+
         select.replaceChildren(new Option(placeholder, ''));
-        items.forEach((item) => {
+
+        sortedItems.forEach((item) => {
             const option = new Option(item.name, item.name);
             option.dataset.code = item.code;
-            option.selected = item.name === selectedValue;
+            option.selected = normalizeSelection(item.name) === normalizedSelectedValue;
             select.add(option);
         });
+
+        if (normalizedSelectedValue && ![...select.options].some((option) => option.value && normalizeSelection(option.value) === normalizedSelectedValue)) {
+            select.value = '';
+        }
+
         select.disabled = false;
     }
 

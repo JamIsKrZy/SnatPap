@@ -74,6 +74,30 @@ class AuthFlowTests(TestCase):
 		self.assertContains(response, 'class="form-control is-invalid" id="password"', html=False)
 		self.assertContains(response, 'class="form-control is-invalid" id="password_confirmation"', html=False)
 
+	def test_registration_keeps_location_values_after_validation_error(self):
+		response = self.client.post('/auth/register/', {
+			'first_name': 'Sam',
+			'last_name': 'Smith',
+			'username': 'sam',
+			'email': 'sam@example.com',
+			'country_code': '+63',
+			'phone_number': '9123456789',
+			'street_address': '123 Main Street',
+			'barangay': 'Central',
+			'city_municipality': 'Manila',
+			'province': 'Metro Manila',
+			'postal_code': '1000',
+			'password': 'A-strong-password-123',
+			'password_confirmation': 'different-password',
+			'consent': 'on',
+		})
+
+		html = response.content.decode()
+		self.assertIn('data-selected="Metro Manila"', html)
+		self.assertIn('data-selected="Manila"', html)
+		self.assertIn('data-selected="Central"', html)
+		self.assertContains(response, 'The passwords do not match.')
+
 	def test_registration_rejects_invalid_email(self):
 		response = self.client.post('/auth/register/', {
 			'first_name': 'Sam',
