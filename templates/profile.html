@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Profile | SnatPap{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card glass-card">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                    <div>
+                        <p class="text-secondary mb-1">Account</p>
+                        <h1 class="h2 text-white mb-0">Profile</h1>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">Active</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary">Username</label>
+                        <div class="form-control bg-dark-subtle text-white border-0">{{ request.user.username }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary">Full name</label>
+                        <div class="form-control bg-dark-subtle text-white border-0">{{ request.user.get_full_name|default:'Not provided yet' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary">Email</label>
+                        <div class="form-control bg-dark-subtle text-white border-0">{{ request.user.email|default:'No email entered' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary">Member since</label>
+                        <div class="form-control bg-dark-subtle text-white border-0">{{ request.user.date_joined|date:'M d, Y' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

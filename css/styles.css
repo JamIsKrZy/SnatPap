@@ -1,0 +1,252 @@
+:root {
+    --mouse-x: 50vw;
+    --mouse-y: 50vh;
+}
+
+body {
+    background-color: #0a0a0c;
+    min-height: 100vh;
+    position: relative;
+    z-index: 0;
+    color: #e0e0e0;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+    background-size: 20px 20px;
+    mask-image:
+        radial-gradient(circle at 50% 50%, rgba(0,0,0,0.15) 0%, transparent 80%),
+        radial-gradient(circle 350px at var(--mouse-x) var(--mouse-y), black 0%, transparent 100%);
+    -webkit-mask-image:
+        radial-gradient(circle at 50% 50%, rgba(0,0,0,0.15) 0%, transparent 80%),
+        radial-gradient(circle 350px at var(--mouse-x) var(--mouse-y), black 0%, transparent 100%);
+    z-index: -2;
+    pointer-events: none;
+    transition: mask-position 0.1s ease;
+}
+
+.glow-wrapper {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.dark-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70vw;
+    height: 70vh;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.95) 0%, transparent 70%);
+}
+
+.vibrant-glow {
+    position: absolute;
+    top: var(--mouse-y);
+    left: var(--mouse-x);
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(112, 0, 255, 0.12) 0%, rgba(0, 212, 255, 0.04) 50%, transparent 70%);
+    filter: blur(40px);
+    transition: top 0.1s ease, left 0.1s ease;
+}
+
+.ripple-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    filter: blur(50px);
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+    will-change: transform, opacity;
+    animation-name: ripple-bloom;
+    animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation-fill-mode: forwards;
+}
+
+@keyframes ripple-bloom {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    12% {
+        opacity: 0.45;
+    }
+    55% {
+        opacity: 0.22;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ripple-glow {
+        animation: none;
+        display: none;
+    }
+}
+
+.glass-card {
+    background: rgba(20, 20, 24, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    box-shadow:
+        0 30px 60px rgba(0, 0, 0, 0.9),
+        0 0 25px rgba(112, 0, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.navbar {
+    background: rgba(10, 10, 12, 0.6) !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar-brand {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.avatar-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6200ea, #00d4ff);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.logout-form {
+    width: 100%;
+}
+
+.dropdown-menu {
+    background-color: rgba(14, 14, 18, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.dropdown-item {
+    color: #e0e0e0;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+
+.form-control,
+.form-select {
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: rgba(0, 0, 0, 0.6);
+    border-color: #7000ff;
+    box-shadow: 0 0 0 0.25rem rgba(112, 0, 255, 0.25);
+    color: white;
+}
+
+.site-select {
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+}
+
+.site-select:focus {
+    background-color: rgba(0, 0, 0, 0.6);
+    border-color: #7000ff;
+    box-shadow: 0 0 0 0.25rem rgba(112, 0, 255, 0.25);
+    color: white;
+}
+
+.site-select:disabled {
+    background-color: rgba(0, 0, 0, 0.25);
+    color: #6c757d;
+    opacity: 0.75;
+}
+
+.site-select option {
+    background-color: #141418;
+    color: #e0e0e0;
+}
+
+.country-select {
+    max-width: 7rem;
+}
+
+.btn-primary {
+    background-color: #6200ea;
+    border-color: #6200ea;
+    box-shadow: 0 4px 15px rgba(98, 0, 234, 0.4);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #7c4dff;
+    border-color: #7c4dff;
+    box-shadow: 0 6px 20px rgba(124, 77, 255, 0.6);
+    transform: translateY(-1px);
+}
+
+.password-field {
+    position: relative;
+}
+
+.password-field .form-control {
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    z-index: 2;
+    padding: 0.25rem;
+    border: 0;
+    background: transparent;
+    color: #adb5bd;
+    line-height: 1;
+    transform: translateY(-50%);
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+    color: #ffffff;
+}
+
+a {
+    color: #00d4ff;
+    text-decoration: none;
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+a:hover {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+}
+
+.list-group-item {
+    background: rgba(255, 255, 255, 0.02);
+}

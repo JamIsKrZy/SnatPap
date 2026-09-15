@@ -1,4 +1,4 @@
-{% extends 'auth/base.html' %}
+{% extends 'base.html' %}
 {% block title %}Register | SnatPap{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
@@ -99,75 +99,4 @@
         </div>
     </div>
 </div>
-<script>
-    const psgcApi = 'https://psgc.gitlab.io/api';
-    const provinceSelect = document.getElementById('province');
-    const citySelect = document.getElementById('city_municipality');
-    const barangaySelect = document.getElementById('barangay');
-
-    function populateSelect(select, items, placeholder, selectedValue) {
-        select.replaceChildren(new Option(placeholder, ''));
-        items.forEach((item) => {
-            const option = new Option(item.name, item.name);
-            option.dataset.code = item.code;
-            option.selected = item.name === selectedValue;
-            select.add(option);
-        });
-        select.disabled = false;
-    }
-
-    async function loadLocationOptions(url, select, placeholder, selectedValue) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Location data request failed');
-            populateSelect(select, await response.json(), placeholder, selectedValue);
-        } catch (error) {
-            select.replaceChildren(new Option('Unable to load options. Please refresh.', ''));
-        }
-    }
-
-    provinceSelect.addEventListener('change', () => {
-        const provinceCode = provinceSelect.options[provinceSelect.selectedIndex]?.dataset.code;
-        citySelect.disabled = true;
-        barangaySelect.disabled = true;
-        if (provinceCode) {
-            loadLocationOptions(`${psgcApi}/provinces/${provinceCode}/cities-municipalities.json`, citySelect, 'Select a city or municipality', citySelect.dataset.selected);
-        }
-    });
-
-    citySelect.addEventListener('change', () => {
-        const cityCode = citySelect.options[citySelect.selectedIndex]?.dataset.code;
-        barangaySelect.disabled = true;
-        if (cityCode) {
-            loadLocationOptions(`${psgcApi}/cities-municipalities/${cityCode}/barangays.json`, barangaySelect, 'Select a barangay', barangaySelect.dataset.selected);
-        }
-    });
-
-    loadLocationOptions(`${psgcApi}/provinces.json`, provinceSelect, 'Select a province', provinceSelect.dataset.selected).then(() => {
-        if (provinceSelect.value) provinceSelect.dispatchEvent(new Event('change'));
-    });
-
-    document.querySelectorAll('.password-reveal').forEach((button) => {
-        const password = document.getElementById(button.dataset.passwordTarget);
-
-        const showPassword = () => {
-            password.type = 'text';
-            button.setAttribute('aria-pressed', 'true');
-            button.setAttribute('aria-label', 'Release to hide password');
-            button.querySelector('i').className = 'bi bi-eye-slash';
-        };
-
-        const hidePassword = () => {
-            password.type = 'password';
-            button.setAttribute('aria-pressed', 'false');
-            button.setAttribute('aria-label', 'Hold to show password');
-            button.querySelector('i').className = 'bi bi-eye';
-        };
-
-        button.addEventListener('pointerdown', showPassword);
-        button.addEventListener('pointerup', hidePassword);
-        button.addEventListener('pointerleave', hidePassword);
-        button.addEventListener('pointercancel', hidePassword);
-    });
-</script>
 {% endblock %}
