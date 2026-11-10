@@ -248,3 +248,64 @@ a:hover {
 .list-group-item {
     background: rgba(255, 255, 255, 0.02);
 }
+
+.text-cyan {
+    color: #00d4ff !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.upload-dropzone {
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    background-color: rgba(10, 10, 14, 0.4);
+    transition: all 0.25s ease-in-out;
+    cursor: pointer;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.dropzone-active {
+    border-color: #00d4ff;
+    background-color: rgba(0, 212, 255, 0.05);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+}
+
+.code-block {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    background-color: #060608 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #c9d1d9 !important;
+}
+
+.code-block code {
+    color: inherit;
+}
+
+.modal-content.glass-card {
+    background: rgba(16, 16, 22, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+.nav-tabs .nav-link {
+    color: #8b949e;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #ffffff;
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.nav-tabs .nav-link.active {
+    color: #00d4ff !important;
+    background: transparent;
+    border-bottom: 2px solid #00d4ff;
+}
+

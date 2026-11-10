@@ -17,24 +17,62 @@
 
     <nav class="navbar navbar-dark shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'home' %}">SnatPap</a>
-            {% if user.is_authenticated %}
-                <div class="dropdown">
-                    <button class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="avatar-circle">{{ user.username|first|upper }}</span>
-                        <span>{{ user.username }}</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                        <li><a class="dropdown-item" href="{% url 'profile' %}">View profile</a></li>
-                        <li><a class="dropdown-item" href="{% url 'settings' %}">Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form method="post" action="{% url 'logout' %}" class="logout-form">
-                                {% csrf_token %}
-                                <button class="dropdown-item text-danger" type="submit">Log out</button>
-                            </form>
+            <div class="d-flex align-items-center gap-4">
+                <a class="navbar-brand fw-bold mb-0" href="{% url 'home' %}">SnatPap</a>
+                {% if user.is_authenticated %}
+                    <ul class="navbar-nav flex-row gap-3 d-none d-md-flex">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active fw-semibold text-white{% endif %}" href="{% url 'home' %}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'documents' %}active fw-semibold text-white{% endif %}" href="{% url 'documents' %}">
+                                <i class="bi bi-file-earmark-arrow-up me-1 text-cyan"></i>Documents
+                            </a>
                         </li>
                     </ul>
+                {% endif %}
+            </div>
+
+            {% if user.is_authenticated %}
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'documents' %}" class="btn btn-sm border border-warning border-opacity-25 bg-dark bg-opacity-75 d-flex align-items-center gap-2 px-3 py-1 rounded-pill text-decoration-none shadow-sm" title="Your available token balance">
+                        <i class="bi bi-coin text-warning fs-6"></i>
+                        <span class="fw-bold text-white">{{ user_credit.tokens|default:0 }}</span>
+                        <span class="text-secondary small">Credits</span>
+                    </a>
+
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="avatar-circle">{{ user.username|first|upper }}</span>
+                            <span>{{ user.username }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'documents' %}">
+                                    <i class="bi bi-file-earmark-code text-cyan"></i> Documents & History
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'profile' %}">
+                                    <i class="bi bi-person"></i> View profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'settings' %}">
+                                    <i class="bi bi-gear"></i> Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'logout' %}" class="logout-form">
+                                    {% csrf_token %}
+                                    <button class="dropdown-item text-danger d-flex align-items-center gap-2" type="submit">
+                                        <i class="bi bi-box-arrow-right"></i> Log out
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             {% elif request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'register' %}
                 <a class="btn btn-outline-light px-3 py-2" href="{% url 'login' %}">Log in</a>

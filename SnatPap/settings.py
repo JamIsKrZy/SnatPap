@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-xz=0(%mdccimm9wwdq_#-uf855b!c^^gybgu-yq!o4_ephasm4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -63,10 +63,14 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'main.context_processors.user_credits',
             ],
         },
     },
 ]
+
+
+
 
 WSGI_APPLICATION = 'SnatPap.wsgi.application'
 
@@ -123,6 +127,9 @@ STATICFILES_DIRS = [
     BASE_DIR / 'images',
 ]
 LOGIN_URL = 'login'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Email

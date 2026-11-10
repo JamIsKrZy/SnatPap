@@ -2,15 +2,124 @@
 {% block title %}Home | SnatPap{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card glass-card">
+    <div class="col-lg-10">
+        <div class="card glass-card mb-4">
             <div class="card-body p-4 p-md-5">
-                <h1 class="display-5 fw-bold text-white mb-3">Home page</h1>
-                <p class="text-secondary mb-0">
-                    Welcome to SnatPap. Your account is ready and the profile menu is available when you are signed in.
-                </p>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                    <div>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 mb-2">Home page &bull; Automated Document Parser</span>
+                        <h1 class="display-5 fw-bold text-white mb-2">Transform Documents into Structured Data</h1>
+                        <p class="text-secondary mb-0 lead fs-6">
+                            Upload receipts, invoices, records, and images. Our black-box conversion pipeline automatically structures your text into ready-to-use JSON and SQL formats.
+                        </p>
+                    </div>
+                    {% if user.is_authenticated %}
+                        <div class="d-flex flex-column align-items-md-end gap-2">
+                            <a href="{% url 'documents' %}" class="btn btn-primary px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow">
+                                <i class="bi bi-cloud-arrow-up fs-5"></i>
+                                <span>Go to Document Hub</span>
+                            </a>
+                            <span class="text-secondary small">
+                                <i class="bi bi-coin text-warning me-1"></i>{{ user_credit.tokens|default:0 }} credits available
+                            </span>
+                        </div>
+                    {% else %}
+                        <div>
+                            <a href="{% url 'register' %}" class="btn btn-primary px-4 py-2 fw-semibold">Get Started Free</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-light-subtle h-100">
+                            <div class="d-flex align-items-center gap-2 text-info mb-2">
+                                <i class="bi bi-receipt fs-4"></i>
+                                <h6 class="text-white mb-0">Receipts & Invoices</h6>
+                            </div>
+                            <p class="text-secondary small mb-0">Extract line items, merchant metadata, dates, tax breakdown, and total amounts automatically.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-light-subtle h-100">
+                            <div class="d-flex align-items-center gap-2 text-warning mb-2">
+                                <i class="bi bi-file-earmark-code fs-4"></i>
+                                <h6 class="text-white mb-0">JSON & SQL Ready</h6>
+                            </div>
+                            <p class="text-secondary small mb-0">Instantly generate structured JSON schemas and executable SQL schema & insert statements.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-dark bg-opacity-50 border border-light-subtle h-100">
+                            <div class="d-flex align-items-center gap-2 text-success mb-2">
+                                <i class="bi bi-coin fs-4"></i>
+                                <h6 class="text-white mb-0">Credit-Based Metering</h6>
+                            </div>
+                            <p class="text-secondary small mb-0">Transparent token pricing per upload with complete transaction history and balance tracking.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        {% if user.is_authenticated and recent_docs %}
+            <div class="card glass-card">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-white mb-0"><i class="bi bi-clock-history me-2 text-cyan"></i>Recent Document Records</h5>
+                        <a href="{% url 'documents' %}" class="small text-decoration-none">View All Documents &rarr;</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0 bg-transparent">
+                            <thead>
+                                <tr class="text-secondary small">
+                                    <th>Document</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in recent_docs %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi {% if doc.is_image %}bi-file-earmark-image text-info{% else %}bi-file-earmark-text text-primary{% endif %} fs-5"></i>
+                                                <div>
+                                                    <div class="fw-semibold text-white">{{ doc.display_title }}</div>
+                                                    <div class="text-secondary small">{{ doc.formatted_size }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge bg-secondary-subtle text-light border border-secondary">{{ doc.get_doc_type_display }}</span></td>
+                                        <td>
+                                            {% if doc.status == 'completed' %}
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                    <i class="bi bi-check-circle me-1"></i>Completed
+                                                </span>
+                                            {% elif doc.status == 'pending' %}
+                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                                    <i class="bi bi-clock me-1"></i>Pending
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-info-subtle text-info border border-info-subtle">{{ doc.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-secondary small">{{ doc.created_at|date:'M d, Y H:i' }}</td>
+                                        <td class="text-end">
+                                            <a href="{% url 'documents' %}?q={{ doc.original_filename }}" class="btn btn-sm btn-outline-info">
+                                                <i class="bi bi-eye me-1"></i>View Output
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

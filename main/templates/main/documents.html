@@ -1,0 +1,880 @@
+{% extends 'base.html' %}
+{% block title %}Document Hub | SnatPap{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Top Header & Credits Bar -->
+    <div class="col-12">
+        <div class="card glass-card">
+            <div class="card-body p-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-primary-subtle text-cyan border border-primary-subtle">
+                                <i class="bi bi-cpu me-1"></i>Automated Conversion Hub
+                            </span>
+                            <span class="badge bg-secondary-subtle text-light border border-secondary">
+                                <i class="bi bi-box-seam me-1"></i>Black-Box Pipeline
+                            </span>
+                        </div>
+                        <h1 class="h2 text-white fw-bold mb-1">Document Ingestion & Output Records</h1>
+                        <p class="text-secondary mb-0 small">
+                            Upload documents, receipts, invoices, or records. The black-box engine converts raw text into structured JSON and ready-to-run SQL.
+                        </p>
+                    </div>
+
+                    <!-- Credit System Info Box -->
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="p-2 px-3 rounded-3 bg-dark bg-opacity-75 border border-warning border-opacity-50 d-flex align-items-center gap-3 shadow-sm">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-2 text-warning d-flex align-items-center justify-content-center">
+                                <i class="bi bi-coin fs-4"></i>
+                            </div>
+                            <div>
+                                <div class="text-secondary small text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Available Tokens</div>
+                                <div class="fs-4 fw-bold text-white lh-1">
+                                    <span id="creditTokenDisplay">{{ credit.tokens }}</span>
+                                    <span class="fs-6 fw-normal text-warning">Tokens</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group shadow-sm">
+                            <button type="button" class="btn btn-outline-warning btn-sm d-flex align-items-center gap-1 py-2 px-3" data-bs-toggle="modal" data-bs-target="#topupModal">
+                                <i class="bi bi-plus-circle"></i> Add Tokens
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 py-2 px-3" data-bs-toggle="modal" data-bs-target="#creditHistoryModal">
+                                <i class="bi bi-journal-text"></i> Token Logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="col-lg-5">
+        <div class="card glass-card h-100">
+            <div class="card-header bg-transparent border-bottom border-light border-opacity-10 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="text-white mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-cloud-arrow-up text-cyan"></i>
+                        <span>Upload File</span>
+                    </h5>
+                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">
+                        Cost: {{ token_cost }} Tokens
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                {% if credit.tokens < token_cost %}
+                    <div class="alert alert-warning bg-warning bg-opacity-10 border border-warning border-opacity-25 text-warning mb-3" role="alert">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                            <strong>Insufficient Tokens</strong>
+                        </div>
+                        <p class="small mb-2">You need at least {{ token_cost }} tokens to upload and process a document. Your current balance is {{ credit.tokens }} tokens.</p>
+                        <button type="button" class="btn btn-warning btn-sm text-dark fw-semibold" data-bs-toggle="modal" data-bs-target="#topupModal">
+                            <i class="bi bi-coin me-1"></i>Get Free Test Tokens
+                        </button>
+                    </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+
+                    <!-- Dropzone -->
+                    <div class="upload-dropzone mb-3 text-center p-4 rounded-3" id="dropzone">
+                        <input type="file" name="document_file" id="document_file" class="d-none" required
+                               accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.csv,.doc,.docx" {% if credit.tokens < token_cost %}disabled{% endif %}>
+                        <div class="dropzone-content py-2">
+                            <div class="mb-2">
+                                <i class="bi bi-file-earmark-arrow-up text-cyan display-5"></i>
+                            </div>
+                            <h6 class="text-white mb-1">Choose a file or drag & drop it here</h6>
+                            <p class="text-secondary small mb-3">
+                                Receipts, invoices, official records, or photos (PDF, PNG, JPG, TXT, CSV up to 25MB)
+                            </p>
+                            <button type="button" class="btn btn-outline-info btn-sm px-3" id="browseBtn" {% if credit.tokens < token_cost %}disabled{% endif %}>
+                                <i class="bi bi-folder2-open me-1"></i>Browse Files
+                            </button>
+                        </div>
+                        <div class="file-preview d-none text-start p-3 rounded-2 bg-dark bg-opacity-75 border border-cyan border-opacity-25" id="filePreview">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                    <i class="bi bi-file-earmark-check text-success fs-4"></i>
+                                    <div class="overflow-hidden">
+                                        <div class="text-white text-truncate fw-semibold" id="previewFilename">filename.png</div>
+                                        <div class="text-secondary small" id="previewFilesize">0 KB</div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger border-0" id="removeFileBtn" title="Remove file">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Category -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-semibold" for="doc_type">Document Category</label>
+                        <select class="form-select bg-dark text-white border-light border-opacity-10" id="doc_type" name="doc_type" {% if credit.tokens < token_cost %}disabled{% endif %}>
+                            <option value="receipt" selected>Receipt (Thermal / Digital store receipts)</option>
+                            <option value="invoice">Invoice (Commercial / Service billing)</option>
+                            <option value="record">Official Record (Registry / Archive Dossier)</option>
+                            <option value="document">General Document (Agreements, Memos)</option>
+                            <option value="image">Scanned Image / Camera Photo</option>
+                            <option value="other">Other Document Format</option>
+                        </select>
+                    </div>
+
+                    <!-- Document Reference Title (Optional) -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-semibold" for="title">Title / Reference (Optional)</label>
+                        <input type="text" class="form-control bg-dark text-white border-light border-opacity-10" id="title" name="title"
+                               placeholder="e.g. Office Supplies Receipt - Nov 2026" {% if credit.tokens < token_cost %}disabled{% endif %}>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <!-- Desired Output -->
+                        <div class="col-sm-6">
+                            <label class="form-label text-secondary small fw-semibold" for="output_format">Output Formats</label>
+                            <select class="form-select bg-dark text-white border-light border-opacity-10" id="output_format" name="output_format" {% if credit.tokens < token_cost %}disabled{% endif %}>
+                                <option value="both" selected>JSON & SQL Data</option>
+                                <option value="json">JSON Only</option>
+                                <option value="sql">SQL Only</option>
+                            </select>
+                        </div>
+                        <!-- Conversion Execution Mode -->
+                        <div class="col-sm-6">
+                            <label class="form-label text-secondary small fw-semibold" for="process_mode">Black-Box Pipeline</label>
+                            <select class="form-select bg-dark text-white border-light border-opacity-10" id="process_mode" name="process_mode" {% if credit.tokens < token_cost %}disabled{% endif %}>
+                                <option value="immediate" selected>Auto-Convert Now</option>
+                                <option value="pending">Mark Pending for Worker</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded-2 bg-dark bg-opacity-50 border border-light border-opacity-10 mb-3">
+                        <div class="small">
+                            <div class="text-white fw-semibold">Upload Fee</div>
+                            <div class="text-secondary">Deducted from token balance</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="fs-5 fw-bold text-warning">-{{ token_cost }}</span>
+                            <span class="text-secondary small">Tokens</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" id="submitBtn" {% if credit.tokens < token_cost %}disabled{% endif %}>
+                        <i class="bi bi-upload"></i>
+                        <span>Upload & Process Document</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- History, Uploaded Records & Outputs Table -->
+    <div class="col-lg-7">
+        <div class="card glass-card h-100">
+            <div class="card-header bg-transparent border-bottom border-light border-opacity-10 py-3">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                    <div>
+                        <h5 class="text-white mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-journal-code text-cyan"></i>
+                            <span>Upload History & Outputs</span>
+                        </h5>
+                        <span class="text-secondary small">{{ page_obj.paginator.count }} total records found</span>
+                    </div>
+
+                    <!-- Status Quick Filters -->
+                    <div class="d-flex align-items-center gap-1">
+                        <a href="{% url 'documents' %}" class="btn btn-sm {% if not status_filter %}btn-secondary{% else %}btn-outline-secondary border-0 text-secondary{% endif %} py-1 px-2 small">All</a>
+                        <a href="{% url 'documents' %}?status=completed" class="btn btn-sm {% if status_filter == 'completed' %}btn-success{% else %}btn-outline-secondary border-0 text-secondary{% endif %} py-1 px-2 small">Completed</a>
+                        <a href="{% url 'documents' %}?status=pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-secondary border-0 text-secondary{% endif %} py-1 px-2 small">Pending</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-3">
+                <!-- Search & Type Filter Bar -->
+                <form method="get" class="row g-2 mb-3">
+                    <div class="col-sm-7">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-dark border-light border-opacity-10 text-secondary"><i class="bi bi-search"></i></span>
+                            <input type="text" name="q" class="form-control bg-dark text-white border-light border-opacity-10"
+                                   placeholder="Search by file name or text..." value="{{ search_query }}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <select name="type" class="form-select form-select-sm bg-dark text-white border-light border-opacity-10" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            <option value="receipt" {% if type_filter == 'receipt' %}selected{% endif %}>Receipts</option>
+                            <option value="invoice" {% if type_filter == 'invoice' %}selected{% endif %}>Invoices</option>
+                            <option value="record" {% if type_filter == 'record' %}selected{% endif %}>Records</option>
+                            <option value="document" {% if type_filter == 'document' %}selected{% endif %}>Documents</option>
+                            <option value="image" {% if type_filter == 'image' %}selected{% endif %}>Images</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <button type="submit" class="btn btn-sm btn-outline-info w-100">Filter</button>
+                    </div>
+                </form>
+
+                <!-- Documents List -->
+                {% if page_obj %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0 bg-transparent">
+                            <thead>
+                                <tr class="text-secondary small border-light border-opacity-10">
+                                    <th>File / Title</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Cost</th>
+                                    <th class="text-end">Actions & Outputs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in page_obj %}
+                                    <tr class="border-light border-opacity-10">
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="rounded p-2 bg-dark bg-opacity-75 border border-light border-opacity-10 text-center" style="width: 36px; height: 36px;">
+                                                    {% if doc.is_image %}
+                                                        <i class="bi bi-file-earmark-image text-info"></i>
+                                                    {% elif doc.doc_type == 'receipt' %}
+                                                        <i class="bi bi-receipt text-warning"></i>
+                                                    {% elif doc.doc_type == 'invoice' %}
+                                                        <i class="bi bi-file-earmark-spreadsheet text-success"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-file-earmark-text text-primary"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="overflow-hidden" style="max-width: 170px;">
+                                                    <div class="text-white fw-semibold text-truncate" title="{{ doc.display_title }}">
+                                                        {{ doc.display_title }}
+                                                    </div>
+                                                    <div class="text-secondary small text-truncate" style="font-size: 0.75rem;">
+                                                        {{ doc.formatted_size }} &bull; {{ doc.created_at|date:'M d, H:i' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary-subtle text-light border border-secondary" style="font-size: 0.72rem;">
+                                                {{ doc.get_doc_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if doc.status == 'completed' %}
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 0.72rem;">
+                                                    <i class="bi bi-check-circle me-1"></i>Completed
+                                                </span>
+                                            {% elif doc.status == 'pending' %}
+                                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25" style="font-size: 0.72rem;">
+                                                    <i class="bi bi-clock me-1"></i>Pending Box
+                                                </span>
+                                            {% elif doc.status == 'processing' %}
+                                                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25" style="font-size: 0.72rem;">
+                                                    <span class="spinner-border spinner-border-sm me-1" role="status" style="width: 0.7rem; height: 0.7rem;"></span>Processing
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 0.72rem;">
+                                                    Failed
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-dark border border-warning border-opacity-25 text-warning small">
+                                                -{{ doc.tokens_cost }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group btn-group-sm">
+                                                <!-- View Outputs Button -->
+                                                <button type="button" class="btn btn-outline-info view-output-btn"
+                                                        data-doc-id="{{ doc.id }}" title="View Extracted Outputs (JSON, SQL, Text)">
+                                                    <i class="bi bi-eye"></i> View
+                                                </button>
+
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                                        <li>
+                                                            <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'document_download_file' doc.id %}">
+                                                                <i class="bi bi-download text-primary"></i> Download Original File
+                                                            </a>
+                                                        </li>
+                                                        {% if doc.json_output %}
+                                                            <li>
+                                                                <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'document_download_output' doc.id 'json' %}">
+                                                                    <i class="bi bi-filetype-json text-warning"></i> Download JSON (.json)
+                                                                </a>
+                                                            </li>
+                                                        {% endif %}
+                                                        {% if doc.sql_output %}
+                                                            <li>
+                                                                <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'document_download_output' doc.id 'sql' %}">
+                                                                    <i class="bi bi-filetype-sql text-info"></i> Download SQL (.sql)
+                                                                </a>
+                                                            </li>
+                                                        {% endif %}
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <form method="post" action="{% url 'document_reprocess' doc.id %}">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-info">
+                                                                    <i class="bi bi-arrow-repeat"></i> Re-convert Black Box
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                        <li>
+                                                            <form method="post" action="{% url 'document_delete' doc.id %}" onsubmit="return confirm('Are you sure you want to delete this document record?');">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                                                                    <i class="bi bi-trash"></i> Delete Record
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                        <nav class="mt-3">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-white border-light border-opacity-10" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">&laquo;</a>
+                                    </li>
+                                {% endif %}
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link bg-primary border-primary">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link bg-dark text-white border-light border-opacity-10" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-white border-light border-opacity-10" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">&raquo;</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-5 text-secondary">
+                        <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
+                        <h6 class="text-white">No documents found</h6>
+                        <p class="small mb-0">Upload a receipt, invoice, record, or document above to see the converted JSON and SQL outputs here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- OUTPUT VIEWER MODAL                                                    -->
+<!-- ======================================================================= -->
+<div class="modal fade" id="outputModal" tabindex="-1" aria-labelledby="outputModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content glass-card border border-light border-opacity-10 bg-dark text-white shadow-lg">
+            <div class="modal-header border-bottom border-light border-opacity-10 py-3">
+                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                    <span class="badge bg-primary-subtle text-cyan border border-primary-subtle" id="modalCategoryBadge">Receipt</span>
+                    <h5 class="modal-title text-truncate fw-bold mb-0" id="outputModalLabel">Document Outputs</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Meta Info Strip -->
+                <div class="p-3 bg-black bg-opacity-40 border-bottom border-light border-opacity-10 d-flex flex-wrap justify-content-between align-items-center gap-2 small">
+                    <div class="d-flex align-items-center gap-3 text-secondary">
+                        <span><i class="bi bi-file-earmark me-1"></i><span id="modalFilename" class="text-white fw-semibold"></span></span>
+                        <span><i class="bi bi-hdd me-1"></i><span id="modalFileSize"></span></span>
+                        <span><i class="bi bi-clock me-1"></i><span id="modalCreatedAt"></span></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span id="modalStatusBadge" class="badge"></span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25" id="modalTokenBadge">5 Tokens</span>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs border-bottom border-light border-opacity-10 px-3 pt-2 bg-dark bg-opacity-50" id="outputTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-white fw-semibold d-flex align-items-center gap-2" id="json-tab" data-bs-toggle="tab" data-bs-target="#json-pane" type="button" role="tab">
+                            <i class="bi bi-filetype-json text-warning fs-5"></i> Formatted JSON
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-white fw-semibold d-flex align-items-center gap-2" id="sql-tab" data-bs-toggle="tab" data-bs-target="#sql-pane" type="button" role="tab">
+                            <i class="bi bi-filetype-sql text-info fs-5"></i> Formatted SQL
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-white fw-semibold d-flex align-items-center gap-2" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-pane" type="button" role="tab">
+                            <i class="bi bi-card-text text-primary fs-5"></i> Extracted Text / OCR
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-white fw-semibold d-flex align-items-center gap-2" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview-pane" type="button" role="tab">
+                            <i class="bi bi-image text-success fs-5"></i> Original File
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-white fw-semibold d-flex align-items-center gap-2" id="api-tab" data-bs-toggle="tab" data-bs-target="#api-pane" type="button" role="tab">
+                            <i class="bi bi-box-seam text-secondary fs-5"></i> Black-Box System Info
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Panes -->
+                <div class="tab-content p-4" id="outputTabsContent">
+                    <!-- JSON Tab -->
+                    <div class="tab-pane fade show active" id="json-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-secondary small">Structured JSON output parsed from document:</span>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-warning" id="copyJsonBtn">
+                                    <i class="bi bi-clipboard me-1"></i> Copy JSON
+                                </button>
+                                <a href="#" class="btn btn-sm btn-warning text-dark fw-semibold" id="downloadJsonBtn">
+                                    <i class="bi bi-download me-1"></i> Download .json
+                                </a>
+                            </div>
+                        </div>
+                        <pre class="code-block bg-black p-3 rounded-3 text-light border border-light border-opacity-10 overflow-auto" style="max-height: 460px;"><code id="jsonCode"></code></pre>
+                    </div>
+
+                    <!-- SQL Tab -->
+                    <div class="tab-pane fade" id="sql-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-secondary small">Executable SQL DDL & DML statements:</span>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-info" id="copySqlBtn">
+                                    <i class="bi bi-clipboard me-1"></i> Copy SQL
+                                </button>
+                                <a href="#" class="btn btn-sm btn-info text-dark fw-semibold" id="downloadSqlBtn">
+                                    <i class="bi bi-download me-1"></i> Download .sql
+                                </a>
+                            </div>
+                        </div>
+                        <pre class="code-block bg-black p-3 rounded-3 text-light border border-light border-opacity-10 overflow-auto" style="max-height: 460px;"><code id="sqlCode"></code></pre>
+                    </div>
+
+                    <!-- Text / OCR Tab -->
+                    <div class="tab-pane fade" id="text-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-secondary small">Raw text extracted by OCR engine:</span>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="copyTextBtn">
+                                    <i class="bi bi-clipboard me-1"></i> Copy Text
+                                </button>
+                                <a href="#" class="btn btn-sm btn-outline-secondary" id="downloadTextBtn">
+                                    <i class="bi bi-download me-1"></i> Download .txt
+                                </a>
+                            </div>
+                        </div>
+                        <pre class="code-block bg-black p-3 rounded-3 text-light border border-light border-opacity-10 overflow-auto" style="max-height: 460px; white-space: pre-wrap;"><code id="rawTextCode"></code></pre>
+                    </div>
+
+                    <!-- Original File Preview Tab -->
+                    <div class="tab-pane fade" id="preview-pane" role="tabpanel">
+                        <div id="imagePreviewContainer" class="text-center py-3 d-none">
+                            <img id="imagePreviewImg" src="" alt="Document Preview" class="img-fluid rounded border border-light border-opacity-10 shadow" style="max-height: 450px;">
+                        </div>
+                        <div id="nonImagePreviewContainer" class="p-4 text-center">
+                            <i class="bi bi-file-earmark-check display-3 text-cyan mb-3 d-block"></i>
+                            <h6 class="text-white" id="nonImageFilename"></h6>
+                            <p class="text-secondary small mb-3">This document is stored securely in SnatPap media storage.</p>
+                            <a href="#" class="btn btn-outline-primary" id="downloadFileModalBtn">
+                                <i class="bi bi-download me-1"></i> Download Original File
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Black Box Architecture Info Tab -->
+                    <div class="tab-pane fade" id="api-pane" role="tabpanel">
+                        <div class="p-3 rounded-3 bg-black bg-opacity-50 border border-light border-opacity-10">
+                            <h6 class="text-white fw-bold mb-2"><i class="bi bi-diagram-3 text-info me-2"></i>Black-Box Architecture Specification</h6>
+                            <p class="text-secondary small">
+                                This project exposes automated ingestion endpoints for any external OCR, LLM, or microservice worker program to handle the document conversion:
+                            </p>
+                            <div class="mb-3">
+                                <div class="text-white small fw-bold mb-1">1. Polling Pending Documents Endpoint:</div>
+                                <code class="p-2 d-block bg-dark text-cyan rounded small">GET /api/documents/pending/</code>
+                            </div>
+                            <div class="mb-3">
+                                <div class="text-white small fw-bold mb-1">2. Submitting Converted JSON & SQL Data:</div>
+                                <code class="p-2 d-block bg-dark text-warning rounded small" id="externalSubmitExample">
+                                    POST /api/documents/{doc_id}/submit-result/<br>
+                                    Content-Type: application/json<br>
+                                    {"status": "completed", "extracted_text": "...", "json_output": {...}, "sql_output": "..."}
+                                </code>
+                            </div>
+                            <div class="alert alert-dark bg-opacity-75 border-secondary small mb-0">
+                                <i class="bi bi-info-circle text-info me-1"></i>
+                                When files are submitted with "Auto-Convert Now", the built-in BlackBox simulation engine immediately extracts structured line items, calculates financial sums, and emits SQLite / PostgreSQL compatible SQL schema and insert queries.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top border-light border-opacity-10 py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- CREDIT TOP-UP MODAL                                                    -->
+<!-- ======================================================================= -->
+<div class="modal fade" id="topupModal" tabindex="-1" aria-labelledby="topupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border border-light border-opacity-10 bg-dark text-white shadow-lg">
+            <div class="modal-header border-bottom border-light border-opacity-10">
+                <h5 class="modal-title fw-bold" id="topupModalLabel">
+                    <i class="bi bi-coin text-warning me-2"></i>Token Credit Recharge
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'credit_topup' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p class="text-secondary small mb-3">
+                        Each document upload and formatted data conversion uses <strong>{{ token_cost }} tokens</strong>. Select an allocation to add credits to your account balance:
+                    </p>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="p-3 rounded-3 border border-light border-opacity-10 d-block text-center cursor-pointer bg-dark bg-opacity-50">
+                                <input type="radio" name="amount" value="50" checked class="form-check-input mb-2">
+                                <div class="fw-bold text-white fs-5">+50 Tokens</div>
+                                <div class="text-secondary small">10 Document Uploads</div>
+                                <span class="badge bg-success-subtle text-success mt-2">Free Starter</span>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="p-3 rounded-3 border border-light border-opacity-10 d-block text-center cursor-pointer bg-dark bg-opacity-50">
+                                <input type="radio" name="amount" value="100" class="form-check-input mb-2">
+                                <div class="fw-bold text-white fs-5">+100 Tokens</div>
+                                <div class="text-secondary small">20 Document Uploads</div>
+                                <span class="badge bg-warning-subtle text-warning mt-2">Recommended</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-light border-opacity-10">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning btn-sm text-dark fw-bold px-3">
+                        <i class="bi bi-plus-circle me-1"></i> Claim Tokens
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- CREDIT TRANSACTION HISTORY MODAL                                       -->
+<!-- ======================================================================= -->
+<div class="modal fade" id="creditHistoryModal" tabindex="-1" aria-labelledby="creditHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content glass-card border border-light border-opacity-10 bg-dark text-white shadow-lg">
+            <div class="modal-header border-bottom border-light border-opacity-10">
+                <h5 class="modal-title fw-bold" id="creditHistoryModalLabel">
+                    <i class="bi bi-journal-text text-warning me-2"></i>Token Credit Transactions
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded-2 bg-dark bg-opacity-50 border border-light border-opacity-10">
+                    <div>
+                        <div class="text-secondary small">Current Token Balance</div>
+                        <div class="fs-4 fw-bold text-warning">{{ credit.tokens }} Tokens</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="text-secondary small">Total Tokens Consumed</div>
+                        <div class="fs-4 fw-bold text-white">{{ credit.total_spent }} Tokens</div>
+                    </div>
+                </div>
+
+                <h6 class="text-white small fw-bold mb-2">Recent Transactions</h6>
+                {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0 bg-transparent">
+                            <thead>
+                                <tr class="text-secondary small border-light border-opacity-10">
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Balance</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in transactions %}
+                                    <tr class="border-light border-opacity-10">
+                                        <td class="text-white small">{{ tx.description }}</td>
+                                        <td>
+                                            {% if tx.amount < 0 %}
+                                                <span class="text-danger fw-bold">{{ tx.amount }}</span>
+                                            {% else %}
+                                                <span class="text-success fw-bold">+{{ tx.amount }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-secondary small">{{ tx.balance_after }}</td>
+                                        <td class="text-secondary small">{{ tx.created_at|date:'M d, Y H:i' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-secondary small mb-0 text-center py-3">No token transactions recorded yet.</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer border-top border-light border-opacity-10">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // -------------------------------------------------------------
+    // Drag and Drop Zone
+    // -------------------------------------------------------------
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('document_file');
+    const browseBtn = document.getElementById('browseBtn');
+    const dropzoneContent = dropzone?.querySelector('.dropzone-content');
+    const filePreview = document.getElementById('filePreview');
+    const previewFilename = document.getElementById('previewFilename');
+    const previewFilesize = document.getElementById('previewFilesize');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (browseBtn && fileInput) {
+        browseBtn.addEventListener('click', () => fileInput.click());
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function showSelectedFile(file) {
+        if (!file) return;
+        previewFilename.textContent = file.name;
+        previewFilesize.textContent = formatBytes(file.size);
+        dropzoneContent.classList.add('d-none');
+        filePreview.classList.remove('d-none');
+    }
+
+    function clearFile() {
+        if (fileInput) fileInput.value = '';
+        dropzoneContent?.classList.remove('d-none');
+        filePreview?.classList.add('d-none');
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                showSelectedFile(e.target.files[0]);
+            }
+        });
+    }
+
+    if (removeFileBtn) {
+        removeFileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearFile();
+        });
+    }
+
+    if (dropzone) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dropzone-active');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dropzone-active');
+            });
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            if (e.dataTransfer && e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                showSelectedFile(e.dataTransfer.files[0]);
+            }
+        });
+    }
+
+    if (uploadForm && submitBtn) {
+        uploadForm.addEventListener('submit', () => {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing Upload...';
+        });
+    }
+
+    // -------------------------------------------------------------
+    // Output Viewer Modal & AJAX Fetching
+    // -------------------------------------------------------------
+    const outputModalEl = document.getElementById('outputModal');
+    let outputModal = null;
+    if (outputModalEl && window.bootstrap) {
+        outputModal = new bootstrap.Modal(outputModalEl);
+    }
+
+    const modalTitle = document.getElementById('outputModalLabel');
+    const modalCategoryBadge = document.getElementById('modalCategoryBadge');
+    const modalFilename = document.getElementById('modalFilename');
+    const modalFileSize = document.getElementById('modalFileSize');
+    const modalCreatedAt = document.getElementById('modalCreatedAt');
+    const modalStatusBadge = document.getElementById('modalStatusBadge');
+    const modalTokenBadge = document.getElementById('modalTokenBadge');
+    const jsonCode = document.getElementById('jsonCode');
+    const sqlCode = document.getElementById('sqlCode');
+    const rawTextCode = document.getElementById('rawTextCode');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreviewImg = document.getElementById('imagePreviewImg');
+    const nonImagePreviewContainer = document.getElementById('nonImagePreviewContainer');
+    const nonImageFilename = document.getElementById('nonImageFilename');
+    const downloadFileModalBtn = document.getElementById('downloadFileModalBtn');
+    const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+    const downloadSqlBtn = document.getElementById('downloadSqlBtn');
+    const downloadTextBtn = document.getElementById('downloadTextBtn');
+    const externalSubmitExample = document.getElementById('externalSubmitExample');
+
+    let currentDocData = null;
+
+    document.querySelectorAll('.view-output-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const docId = btn.dataset.docId;
+            if (!docId) return;
+
+            try {
+                btn.disabled = true;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+
+                const response = await fetch(`/documents/${docId}/detail/`);
+                if (!response.ok) throw new Error('Failed to load document output');
+                const data = await response.json();
+                currentDocData = data;
+
+                // Populate Modal Data
+                modalTitle.textContent = data.title;
+                modalCategoryBadge.textContent = data.doc_type_display;
+                modalFilename.textContent = data.original_filename;
+                modalFileSize.textContent = data.file_size;
+                modalCreatedAt.textContent = data.created_at;
+                modalTokenBadge.textContent = `${data.tokens_cost} Tokens Used`;
+
+                if (data.status === 'completed') {
+                    modalStatusBadge.className = 'badge bg-success bg-opacity-10 text-success border border-success border-opacity-25';
+                    modalStatusBadge.innerHTML = '<i class="bi bi-check-circle me-1"></i>Completed';
+                } else if (data.status === 'pending') {
+                    modalStatusBadge.className = 'badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25';
+                    modalStatusBadge.innerHTML = '<i class="bi bi-clock me-1"></i>Pending External Conversion';
+                } else {
+                    modalStatusBadge.className = 'badge bg-secondary';
+                    modalStatusBadge.textContent = data.status_display;
+                }
+
+                // JSON Output
+                jsonCode.textContent = data.json_output ? JSON.stringify(data.json_output, null, 2) : '// No JSON output generated yet (Status: ' + data.status + ')';
+                downloadJsonBtn.href = `/documents/${data.id}/download-output/json/`;
+
+                // SQL Output
+                sqlCode.textContent = data.sql_output || '-- No SQL generated yet (Status: ' + data.status + ')';
+                downloadSqlBtn.href = `/documents/${data.id}/download-output/sql/`;
+
+                // Raw Text
+                rawTextCode.textContent = data.extracted_text || 'No text extracted yet.';
+                downloadTextBtn.href = `/documents/${data.id}/download-output/text/`;
+
+                // File Preview
+                downloadFileModalBtn.href = `/documents/${data.id}/download/`;
+                if (data.is_image && data.file_url) {
+                    imagePreviewContainer.classList.remove('d-none');
+                    nonImagePreviewContainer.classList.add('d-none');
+                    imagePreviewImg.src = data.file_url;
+                } else {
+                    imagePreviewContainer.classList.add('d-none');
+                    nonImagePreviewContainer.classList.remove('d-none');
+                    nonImageFilename.textContent = data.original_filename;
+                }
+
+                // External API Example Snippet
+                if (externalSubmitExample) {
+                    externalSubmitExample.innerHTML = `POST /api/documents/${data.id}/submit-result/<br>` +
+                        `Content-Type: application/json<br>` +
+                        `{\n  "status": "completed",\n  "extracted_text": "...",\n  "json_output": {...},\n  "sql_output": "..."\n}`;
+                }
+
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+
+                if (outputModal) outputModal.show();
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-eye"></i> View';
+                alert('Could not retrieve document outputs. Please try again.');
+            }
+        });
+    });
+
+    // Copy Buttons
+    function setupCopy(btnId, targetCodeId, label) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            const text = document.getElementById(targetCodeId)?.textContent || '';
+            navigator.clipboard.writeText(text).then(() => {
+                const prev = btn.innerHTML;
+                btn.innerHTML = `<i class="bi bi-check2"></i> Copied!`;
+                btn.classList.add('btn-success');
+                setTimeout(() => {
+                    btn.innerHTML = prev;
+                    btn.classList.remove('btn-success');
+                }, 2000);
+            });
+        });
+    }
+
+    setupCopy('copyJsonBtn', 'jsonCode', 'JSON');
+    setupCopy('copySqlBtn', 'sqlCode', 'SQL');
+    setupCopy('copyTextBtn', 'rawTextCode', 'Text');
+});
+</script>
+{% endblock %}
